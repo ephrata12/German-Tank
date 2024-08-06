@@ -1,0 +1,421 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+
+
+
+```{r,echo= FALSE, warning=FALSE, message=FALSE}
+library(flextable)
+library(dplyr)
+library(knitr)
+library(tidyr)
+```
+
+```{r,echo=FALSE, fig.show='hide'}
+set.seed(231)
+
+# Parameters
+N <- c(1000, 1500, 2000, 2500)
+k <- c(15, 20, 25, 30)
+reps <- 1000
+
+par(mfrow = c(2, 2), mar = c(4, 4, 2, 2))
+ 
+# Initialize vectors with 0s
+mle_estimates <- rep(0, reps)
+mom_estimates <- rep(0, reps)
+scaled_mean_estimates <- rep(0, reps)
+range_estimates <- rep(0, reps)
+
+# Loop through each combination of N and k
+for (n in N) {
+  for (k_val in k) {
+    # Generate estimator values for each 
+    for (i in 1:reps) {
+      sample <- runif(k_val, 0, n)
+      mle_estimates[i] <- max(sample) * ((k_val + 1) / k_val)
+      mom_estimates[i] <- 2 * mean(sample) - 1
+      scaled_mean_estimates[i] <- mean(sample) + 1.74*sd(sample)
+      range_estimates[i] <- max(sample) + min(sample)
+    }
+    
+    # Plot histogram for each estimator
+   
+    hist(mle_estimates, breaks = 30, main = paste("MVUE (N =", n, ", k =", k_val, ")", sep = ""), 
+         xlab = "Estimator Value", col = "lightblue")
+    abline(v = mean(mle_estimates), col = "red", lwd = 2, lty = "dotted")
+    
+    hist(mom_estimates, breaks = 30, main = paste("MoM (N =", n, ", k =", k_val, ")", sep = ""), 
+         xlab = "Estimator Value", col = "lightblue")
+    abline(v = mean(mom_estimates), col = "red", lwd = 2, lty = "dotted")
+    
+    hist(scaled_mean_estimates, breaks = 30, main = paste("Scaled Mean (N =", n, ", k =", k_val, ")", sep = ""), 
+         xlab = "Estimator Value", col = "lightblue")
+    abline(v = mean(scaled_mean_estimates), col = "red", lwd = 2, lty = "dotted")
+    
+    hist(range_estimates, breaks = 30, main = paste("Total Range (N =", n, ", k =", k_val, ")", sep = ""), 
+         xlab = "Estimator Value", col = "lightblue")
+    abline(v = mean(range_estimates), col = "red", lwd = 2, lty = "dotted")
+  }
+}
+```
+
+```{r, echo =FALSE,fig.show='hide'}
+
+results <- data.frame(N = numeric(), k = numeric(), mean = numeric(), sd = numeric())
+
+# Calculate estimates and standard deviations for each estimator
+for (n in N) {
+  for (k_val in k) {
+    # Generate samples and calculate estimates
+    mle_estimates <- replicate(reps, {
+      sample <- runif(k_val, 0, n)
+      max(sample) * ((k_val + 1) / k_val)
+    })
+    mom_estimates <- replicate(reps, {
+      sample1 <- runif(k_val, 0, n)
+      2 * mean(sample1) - 1
+    })
+    scaled_mean_estimates <- replicate(reps, {
+      sample2 <- runif(k_val, 0, n)
+      mean(sample2) + 1.74*sd(sample2)
+    })
+    range_estimates <- replicate(reps, {
+      sample3 <- runif(k_val, 0, n)
+      max(sample3) + min(sample3)
+    })
+    
+    
+    # Calculate standard deviations
+    mle_sd <- sd(mle_estimates)
+    mom_sd <- sd(mom_estimates)
+    scaled_mean_sd <- sd(scaled_mean_estimates)
+    range_sd <- sd(range_estimates)
+    
+    # Add results to the dataframe
+    results <- rbind(results, data.frame(N = n, k = k_val, 
+                                          method = c("MVUE", "MoM", "Scaled Mean", "Total Range"),
+                                          sd = c(mle_sd, mom_sd, scaled_mean_sd, range_sd)))
+  }
+}
+
+```
+
+
+```{r, echo=FALSE}
+
+# Initialize results dataframe for mean
+results_mean <- data.frame(N = numeric(), k = numeric(), mean = numeric())
+
+# Calculate mean estimates for each estimator and multiple values of k
+for (n in N) {
+  for (k_val in k) {
+    # Generate samples and calculate estimates
+    mle_estimates <- replicate(reps, {
+      sample <- runif(k_val, 0, n)
+      max(sample) * ((k_val + 1) / k_val)
+    })
+    mom_estimates <- replicate(reps, {
+      sample1 <- runif(k_val, 0, n)
+      2 * mean(sample1) - 1
+    })
+    scaled_mean_estimates <- replicate(reps, {
+      sample2 <- runif(k_val, 0, n)
+      mean(sample2) + 1.74*sd(sample2)
+    })
+    range_estimates <- replicate(reps, {
+      sample3 <- runif(k_val, 0, n)
+      max(sample3) + min(sample3)
+    })
+    
+    # Calculate means
+    mle_mean <- mean(mle_estimates)
+    mom_mean <- mean(mom_estimates)
+    scaled_mean_mean <- mean(scaled_mean_estimates)
+    range_mean <- mean(range_estimates)
+    
+    # Add results to the dataframe
+    results_mean <- rbind(results_mean, data.frame(N = n, k = k_val, 
+                                                   method = c("MVUE", "MoM", "Scaled Mean", "Total Range"),
+                                                   mean = c(mle_mean, mom_mean, scaled_mean_mean, range_mean)))
+  }
+}
+```
+
+April 01, 2024
+
+
+
+Ephrata Getachew
+
+16 Barrett Hill Dr
+
+Amherst, MA 01002
+
+
+
+Dear Chief Intelligence Officer Professor Wagman,
+
+
+We are writing to present the results of our analysis regarding the estimation of the number of tanks in the Gold army's tank fleet, as assigned to us by the Purple army's intelligence division. Our investigation involved both theoretical derivations and a simulation study to assess the performance of various estimators under different scenarios. 
+
+**Theoretical Derivations**
+
+In our theoretical derivations, we explored the method of moments estimator (MoM) and the minimum variance unbiased estimator (MVUE) for estimating the number of tanks in the Gold army's fleet. By analyzing the probability density function (pdf) and cumulative distribution function (cdf) of a single observation from a discrete uniform distribution, we derived expressions for the expected value and variance of the observation. We then derived the MoM estimator and the MVUE for number of tanks. Furthermore, we identified a sufficient statistic for the number of tanks and investigated the unbiasedness and efficiency of the estimators, guiding us in selecting our preferred estimator. The detailed derivations and findings can be found on page 7 of the appendix.
+
+
+**Simulation Study Setup**
+
+In our simulation study, we aimed to assess the performance of four different estimators (MVUE, MoM, Scaled Mean, and Total Range estimators) in estimating the number of tanks in the Gold army's fleet under varying conditions of sample size (\(k\)) and the number of tanks (\( N \)). We conducted simulations across four different combinations of sample sizes (\(k\) = 15, 20, 25, 30) and the number of tanks (\( N \) = 1000, 1500, 2000, 2500), generating 1000 replications for each combination to calculate the values of the estimators. To maintain reproducibility, we initialized a seed at the beginning of the study. Within each iteration of the loop, we generated estimator values for the MVUE, MoM, Scaled Mean(mean(sample) + 1.74 * standard deviation), and Total Range (maximum(sample) + minimum(sample)) methods. We then calculated the means and standard deviations of these estimators and stored the results in a dataframe. Subsequently, histograms were plotted for each estimator, with the mean estimator value highlighted to provide a reference point. The code is provided in (Appendix [ Code for Simulation](#s1){#s1-ref})
+
+
+**Evaluation of Estimators**
+
+The histograms below display the distribution of estimates for different values of \( k \) and \( N = 2000 \) using the four estimators. The red dotted line represents the average value, serving as our point estimate. Although simulations were conducted for four different values of \( N \), we only show results for \( N = 2000 \) for illustrative purposes. 
+
+```{r, echo=FALSE}
+set.seed(231)
+
+n <- 2000
+k <- 30
+reps <- 1000
+
+generate_estimates <- function(method) {
+  estimates <- numeric(reps)
+  for (i in 1:reps) {
+    sample <- runif(k, 0, n)
+    if (method == "MVUE") {
+      estimates[i] <- max(sample) * ((k + 1) / k)
+    } else if (method == "MoM") {
+      estimates[i] <- 2 * mean(sample) - 1
+    } else if (method == "Scaled Mean") {
+      estimates[i] <- mean(sample) + 1.74*sd(sample)
+    } else if (method == "Total Range") {
+      estimates[i] <- max(sample) + min(sample)
+    }
+  }
+  return(estimates)
+}
+
+mvue_estimates <- generate_estimates("MVUE")
+mom_estimates <- generate_estimates("MoM")
+scaled_mean_estimates <- generate_estimates("Scaled Mean")
+range_estimates <- generate_estimates("Total Range")
+
+par(pin=c(2.4,1.4))  
+
+
+par(mfrow = c(2, 2))
+hist(mvue_estimates, breaks = 30, main = paste("MVUE (N =", n, ", k =", 
+                                                    k_val, ")", sep = ""), 
+           xlab = "Estimator Value", col = "lightblue")
+abline(v = mean(mvue_estimates), col = "red", lwd = 3, lty = "dotted")  # Add blue line for mean
+hist(mom_estimates, breaks = 30, main = paste("MOM estimator (N =", n, ", k =", 
+                                                    k_val, ")", sep = ""), 
+           xlab = "Estimator Value", col = "lightblue")
+abline(v = mean(mom_estimates), col = "red", lwd = 3, lty = "dotted")  # Add blue line for mean
+hist(scaled_mean_estimates, breaks = 30, main = paste("Scaled Mean estimator (N =", n, ", k =", 
+                                                    k_val, ")", sep = ""), 
+           xlab = "Estimator Value", col = "lightblue")
+abline(v = mean(scaled_mean_estimates), col = "red", lwd = 3, lty = "dotted")  # Add blue line for mean
+hist(range_estimates, breaks = 30, main = paste("Total Range estimator (N =", n, ", k =", 
+                                                    k_val, ")", sep = ""), 
+           xlab = "Estimator Value", col = "lightblue")
+abline(v = mean(range_estimates), col = "red", lwd = 3, lty = "dotted")  # Add blue line for mean
+```
+
+
+Looking at the histograms, the MoM estimates demonstrate symmetrical distributions centered around the mean estimate. Referring to (Appendix [ MoM estimator plot](#m1){#m1-ref}) as the sample size (k) increases in our estimation of the number of tanks in the Gold army's fleet, the distribution of the MoM estimate tends to approach normality and bell-shaped. This means that as we gather more sequential serial numbers from the field, our estimation of the fleet size becomes more reliable. This phenomenon is in line with the Central Limit Theorem. Similarly, the Scaled Mean and Total Range estimator is exhibits a distribution somehow close to that of the MoM estimate.
+ 
+
+The MVUE estimates display a left skewed distribution. Since it is based on the maximum value observed in the sample, it tends to be influenced by extreme values, pulling the distribution towards the lower end and resulting in left skewness. However, as k values increase, the spread of estimates diminishes, implying better precision in estimation.
+
+Overall, we found that our four estimator \( N \) are nearly unbiased as the true values is near the mean = 2000. (Appendix [ Mean Estimates](#e1){#e1-ref}). As we would expect with a higher k the mean becomes close to the true population size 2000 and the standard deviation (and hence the variance) decreases significantly as we increase the sample size. 
+
+However, looking at the Table 1, we observed that MVUE consistently exhibited lower standard deviations compared to MoM, Total Range, and Scaled Mean estimator. The lower standard deviations indicate greater precision in estimating the true value of N, making it more consistent and an accurate estimator for the true value of N. By minimizing the spread of estimates, it offers a more focused and reliable assessment of the number of tanks, which is crucial in military intelligence operations where precision and accuracy are paramount. Thus, in scenarios where minimizing estimation error is critical, the MVUE emerges as the preferred choice due to its superior precision and reliability.
+
+
+```{r, echo=FALSE}
+
+results_n1000 <- results %>% filter(N == 2000)
+
+table_n1000 <- results_n1000 %>%
+  select(k, method, sd) %>%
+  spread(key = method, value = sd) %>%
+  rename(MVUE_sd = "MVUE", MoM_sd = "MoM", Scaled_Mean_sd = "Scaled Mean", Total_Range_sd = "Total Range") %>%
+  mutate_at(vars(MVUE_sd, MoM_sd, Scaled_Mean_sd, Total_Range_sd), function(x) format(round(x, 3), nsmall = 3))
+
+kable(table_n1000, caption = "Standard Deviation of Estimators for N = 2000")
+
+```
+
+
+**Conclusion**
+
+Based on our theoretical derivations and simulation study findings, we propose the MVUE as the preferred estimator for estimating \(N\), the total number of tanks in the Gold army's fleet due to its consistency and accurate estimation(low varaince). Using our preferred MVUE estimator and the provided sample of Gold tank serial numbers, our best estimate for the total number of tanks in the Gold army's fleet is 2190.
+
+Sincerely, 
+
+Ephrata Getachew
+
+\newpage
+
+
+# Apendix
+
+#### {#m1}
+
+MoM estimator plot [(Return To Report)](#m1-ref)
+
+
+```{r, echo=FALSE}
+set.seed(231)
+
+# Parameters
+N <- c(1000, 1500, 2000, 2500)
+k <- c(15, 20, 25, 30)
+reps <- 1000
+
+par(pin=c(2.4,1.4))  
+
+par(mfrow = c(2, 2))
+ 
+# Initialize vectors with 0s
+mom_estimates <- rep(0, reps)
+
+# Loop through each combination of N and k
+for (n in N) {
+  if (n == 1500) {
+    for (k_val in k) {
+      # Generate estimator values for each 
+      for (i in 1:reps) {
+        sample <- runif(k_val, 0, n)
+        mom_estimates[i] <- 2 * mean(sample) - 1
+      }
+      
+      # Plot histogram for MoM estimator
+      hist(mom_estimates, breaks = 30, main = paste("MoM (N =", n, ", k =", 
+                                                    k_val, ")", sep = ""), 
+           xlab = "Estimator Value", col = "lightblue")
+      abline(v = mean(mom_estimates), col = "red", lwd = 3, lty = "dotted")
+    }
+  }
+}
+
+```
+
+
+#### Code for Simulation {#s1}
+
+Code for simulation [(Return To Report)](#s1-ref)
+
+```{r,results='hide', fig.show='hide'}
+set.seed(231)
+
+# Parameters
+N <- c(1000, 1500, 2000, 2500)
+k <- c(15, 20, 25, 30)
+reps <- 1000
+
+par(mfrow = c(2, 2), mar = c(4, 4, 2, 2))
+
+# Create a dataframe to store results
+results <- data.frame(N = numeric(), k = numeric(), mean = numeric(), 
+                      sd = numeric())
+ 
+# Initialize vectors with 0s
+mvue_estimates <- rep(0, reps)
+mom_estimates <- rep(0, reps)
+scaled_mean_estimates <- rep(0, reps)
+range_estimates <- rep(0, reps)
+
+# Loop through each combination of N and k
+for (n in N) {
+  for (k_val in k) {
+    # Generate estimator values for each 
+    for (i in 1:reps) {
+      sample <- runif(k_val, 0, n)
+      mvue_estimates[i] <- max(sample) * ((k_val + 1) / k_val)
+      mom_estimates[i] <- 2 * mean(sample) - 1
+      scaled_mean_estimates[i] <- mean(sample) + 1.74*sd(sample)
+      range_estimates[i] <- max(sample) + min(sample)
+    }
+    
+     # Calculate mean
+    mvue_estimates <- mean(mle_estimates)
+    mom_mean <- mean(mom_estimates)
+    scaled_mean <- mean(scaled_mean_estimates)
+    range_mean <- mean(range_estimates)
+    
+    # Calculate standard deviations
+    mvue_estimates <- sd(mle_estimates)
+    mom_sd <- sd(mom_estimates)
+    scaled_mean_sd <- sd(scaled_mean_estimates)
+    range_sd <- sd(range_estimates)
+    
+    # Add results to the dataframe
+    results <- rbind(results, data.frame(N = n, k = k_val, 
+                                          method = c("MVUE", "MoM", 
+                                                     "Scaled Mean", "Total Range"),
+                                          sd = c(mvue_estimates, mom_sd, scaled_mean_sd,
+                                                 range_sd)))
+    
+    # Plot histogram for each estimator
+    hist(mvue_estimates, breaks = 50, main = paste("MVUE (N =", n, ", k = ", 
+                                                  k_val, ")", sep = ""), 
+         xlab = "Estimator Value", col = "lightblue")
+    abline(v = mean(mvue_estimates), col = "red", lwd = 2, lty = "dotted")
+    
+    hist(mom_estimates, breaks = 50, main = paste("MoM (N =", n, ", k = ", 
+                                                  k_val, ")", sep = ""), 
+         xlab = "Estimator Value", col = "lightblue")
+    abline(v = mean(mom_estimates), col = "red", lwd = 2, lty = "dotted")
+    
+    hist(scaled_mean_estimates, breaks = 50, main = paste("Scaled Mean (
+                                      N =", n, ", k = ", k_val, ")", sep = ""), 
+         xlab = "Estimator Value", col = "lightblue")
+    abline(v = mean(scaled_mean_estimates), col = "red", lwd = 2, 
+                                                    lty = "dotted")
+    hist(range_estimates, breaks = 50, main = paste("Total Range (N =", n, ", k = ",
+                                                    k_val, ")", sep = ""), 
+         xlab = "Estimator Value", col = "lightblue")
+    abline(v = mean(range_estimates), col = "red", lwd = 2, lty = "dotted")
+  }
+}
+```
+
+###  Code for table
+ 
+```{r, results='hide'}
+results_n2000 <- results %>% filter(N == 2000)
+table_n2000 <- results_n2000 %>%
+  select(k, method, sd) %>%
+  spread(key = method, value = sd) %>%
+  rename(MVUE_sd = "MVUE", MoM_sd = "MoM", Scaled_Mean_sd = "Scaled Mean", 
+         Range_sd = "Total Range") %>%
+  mutate_at(vars(MVUE_sd, MoM_sd, Scaled_Mean_sd, Range_sd), function(x) 
+    format(round(x, 3), nsmall = 3))
+
+kable(table_n2000, caption = "Standard Deviation of Estimators for N = 2000")
+```
+
+#### Mean Estimates {#e1}
+
+Mean Estimates [(Return To Report)](#e1-ref)
+
+```{r}
+results_mean_n2000 <- results_mean %>% filter(N == 2000)
+
+table_mean_n2000 <- results_mean_n2000 %>%
+  select(k, method, mean) %>%
+  spread(key = method, value = mean) %>%
+  rename(MVUE_mean = "MVUE", MoM_mean = "MoM", 
+         Scaled_Mean_mean = "Scaled Mean", Total_Range_mean = "Total Range") %>%
+  mutate_at(vars(MVUE_mean, MoM_mean, Scaled_Mean_mean, Total_Range_mean), 
+            function(x) format(round(x, 3), nsmall = 3))
+
+kable(table_mean_n2000, caption = "Mean Estimates of Estimators for N = 2000")
+```
+
